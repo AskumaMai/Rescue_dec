@@ -80,7 +80,6 @@ The program includes built-in benchmarking with figure visualizations:
 rescue evaluate pbmc3k_9_1000_500.h5ad pre/model_outputs.txt
 ```
 
-#### Scatter Plot
-<img width="2400" height="1800" alt="Correlation_plot" src="https://github.com/user-attachments/assets/d4e0b084-fcff-4bc6-a82f-36673665f905" />
+
 
 
