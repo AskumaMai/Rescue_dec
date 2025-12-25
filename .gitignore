@@ -1,0 +1,21 @@
+# Python
+__pycache__/
+*.py[cod]
+*.so
+*.egg-info/
+dist/
+build/
+
+# Virtual envs
+.venv/
+venv/
+env/
+.micromamba/
+
+# Editor / OS
+.vscode/
+.DS_Store
+
+# Win11 WSL
+
+*:Zone.Identifier
