@@ -1,6 +1,7 @@
 ## Installation
 
-We recommend installing from source in editable mode
+Since this project in under development,
+We recommend installing from source in editable mode using pip
 
 Download the module folder from github and run the following:
 
@@ -79,6 +80,7 @@ The program includes built-in benchmarking with figure visualizations:
 ```bash
 rescue evaluate pbmc3k_9_1000_500.h5ad pre/model_outputs.txt
 ```
+
 
 
 
