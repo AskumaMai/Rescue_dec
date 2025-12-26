@@ -6,7 +6,9 @@ We recommend installing from source in editable mode using pip
 Download the module folder from github and run the following:
 
 ```bash
-cd /home/.../Rescue_dec
+cd /home/.../Rescue_dec\
+```
+```bash
 python3 -m pip install -e .
 ```
 
@@ -80,6 +82,7 @@ The program includes built-in benchmarking with figure visualizations:
 ```bash
 rescue evaluate pbmc3k_9_1000_500.h5ad pre/model_outputs.txt
 ```
+
 
 
 
