@@ -6,6 +6,8 @@ Download the module folder from github and run the following:
 
 ```bash
 cd /home/.../rescue_CLI
+```
+```bash
 python3 -m pip install -e .
 ```
 
