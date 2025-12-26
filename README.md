@@ -1,13 +1,12 @@
 ## Installation
 
-We recommend installing from source in editable mode
+Since this project in under development,
+We recommend installing from source in editable mode using pip
 
 Download the module folder from github and run the following:
 
 ```bash
-cd /home/.../rescue_CLI
-```
-```bash
+cd /home/.../rescue_dec
 python3 -m pip install -e .
 ```
 
@@ -82,7 +81,9 @@ The program includes built-in benchmarking with figure visualizations:
 rescue evaluate pbmc3k_9_1000_500.h5ad pre/model_outputs.txt
 ```
 
-#### Scatter Plot
-<img width="2400" height="1800" alt="Correlation_plot" src="https://github.com/user-attachments/assets/d4e0b084-fcff-4bc6-a82f-36673665f905" />
+
+
+
+
 
 
