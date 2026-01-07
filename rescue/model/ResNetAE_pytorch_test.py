@@ -49,6 +49,7 @@ class ResNet_pred(torch.nn.Module):
                 n_epoch=1501,
                 verbose=True,
                 outdir=None,
+                early_stop = 500
                 ):
         self.to(device)
         optimizer = torch.optim.Adam(self.parameters(), lr=lr, weight_decay=weight_decay)
@@ -217,7 +218,7 @@ class ResNet_pred(torch.nn.Module):
                             except Exception as e:
                                 continue
                         print(f"\nsave at epoch:{epoch}")
-                if count == 500 or min_loss == 0:
+                if count == early_stop or min_loss == 0:
                     print(
                         f"\nearly stop........\nepoch_max:{epoch_max},min_loss: {min_loss:.4f},ccc_value_min: {ccc_value_max}")
                     break

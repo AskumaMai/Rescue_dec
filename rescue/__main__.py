@@ -143,7 +143,13 @@ Training
     default=18,
     help='Random seed for reproducibility'
 )
-def train(data_path, test_path, out_dir, lr, n_epoch, batch_size, gpu, seed):
+@click.option(
+    '--early_stop',
+    '-es',
+    default=500,
+    help='Early stopping epochs without improvement'
+)
+def train(data_path, test_path, out_dir, lr, n_epoch, batch_size, gpu, seed, early_stop):
     """Train a Rescue model"""
     # lazy import to avoid heavy startup imports
     from .resnet import some_function
@@ -159,6 +165,7 @@ def train(data_path, test_path, out_dir, lr, n_epoch, batch_size, gpu, seed):
         batch_size=batch_size,
         gpu=gpu,
         seed=seed,
+        early_stop=early_stop
     )
 
 

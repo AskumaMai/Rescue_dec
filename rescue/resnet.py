@@ -20,10 +20,11 @@ def some_function(
         verbose: bool = False,
         pretrain: str = None,
         lr: float = 0.0002,
-    n_epoch: int = 1501,
-    batch_size: int = 64,
+        n_epoch: int = 1501,
+        batch_size: int = 64,
         gpu: int = 0,
         seed: int = 18,
+        early_stop: int = 500
 ) -> AnnData:
     np.random.seed(seed)
     torch.manual_seed(seed)
@@ -68,7 +69,8 @@ def some_function(
                       n_epoch=n_epoch,
                       verbose=verbose,
                       device=device,
-                      outdir=outdir
+                      outdir=outdir,
+                      early_stop=early_stop
                       )
         print('Training Finished')
 
