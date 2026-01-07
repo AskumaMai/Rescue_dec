@@ -36,17 +36,19 @@ Simulation
 
 
 @cli.command()
-@click.argument(
-    'num_samples', 
-    type=int,
-    metavar = 'num_samples',
-)
 @click.option(
     '--data_path',
     '-p',
     default='./data',
     type=click.Path(exists=True),
     help='Path to directory containing processed scRNA-seq count files, default: ./data'
+)
+@click.option(
+    '--num_samples',
+    '-n',
+    required=True,
+    type=int,
+    help='Number of samples to simulate'
 )
 @click.option(
     '--out_path', 
@@ -72,7 +74,12 @@ Simulation
     default='txt', 
     help='File suffix for processed scRNA-seq count files'
 )
-def simulate(data_path, out_path, sample_size, num_samples, data_counts, data_suffix):
+@click.option(
+    '--out_name',
+    default=None,
+    help='Optional output .h5ad name. If omitted, uses the default dataset-based name.'
+)
+def simulate(data_path, out_path, sample_size, num_samples, data_counts, data_suffix, out_name):
     """Create simulated bulk RNA-seq samples from scRNA-seq data"""
     logging.info(f"Simulating data from {data_path} -> {out_path} (cells={sample_size}, n={num_samples})")
     # lazy import to avoid heavy module imports at CLI startup
@@ -85,6 +92,7 @@ def simulate(data_path, out_path, sample_size, num_samples, data_counts, data_su
         num_samples=num_samples,
         pattern=data_counts,
         fmt=data_suffix,
+        out_name=out_name,
     )
 
 
@@ -94,14 +102,14 @@ Training
 
 
 @cli.command()
-@click.argument(
-    'data_path',
+@click.option(
+    '--data_path',
     type=click.Path(exists=True),
     default='./train',
     metavar='train_data_path',
 )
-@click.argument(
-    'test_path',
+@click.option(
+    '--test_path',
     type=click.Path(exists=True),
     default='./test',
     metavar='test_data_path',
@@ -173,21 +181,26 @@ def train(data_path, test_path, out_dir, lr, n_epoch, batch_size, gpu, seed, ear
 Prediction
 """
 @cli.command()
-@click.argument(
-    'data_path',
+@click.option(
+    '--data_path',
+    '-d',
+    required=True,
     type=click.Path(exists=True),
-    metavar='train_data',
+    help='Path to training data (.h5ad)'
 )
-@click.argument(
-    'test_path',
+@click.option(
+    '--test_path',
+    '-t',
+    required=True,
     type=click.Path(exists=True),
-    metavar='test_data',
+    help='Path to test data (.h5ad)'
 )
-@click.argument(
-    'model_path',
+@click.option(
+    '--model_path',
+    '-m',
+    required=True,
     type=click.Path(exists=True),
-    metavar='model_path',
-    
+    help='Path to trained model file'
 )
 @click.option(
     '--gpu',
@@ -223,15 +236,19 @@ def predict(data_path, test_path, model_path, gpu, seed):
 Evaluation
 """
 @cli.command()
-@click.argument(
-    'adata_path',
+@click.option(
+    '--adata_path',
+    '-a',
+    required=True,
     type=click.Path(exists=True),
-    metavar='adata_path',
+    help='Path to ground-truth AnnData (.h5ad)'
 )
-@click.argument(
-    'results_path',
+@click.option(
+    '--results_path',
+    '-r',
+    required=True,
     type=click.Path(exists=True),
-    metavar='results_path',
+    help='Path to prediction results file'
 )
 @click.option(
     '--out_path',

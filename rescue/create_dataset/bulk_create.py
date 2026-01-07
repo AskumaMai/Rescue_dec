@@ -94,6 +94,7 @@ class BulkCreate(object):
             num_samples=2000,
             data_path="./",
             out_path="./",
+        out_name: Optional[str] = None,
             pattern="*_counts.txt",
             unknown_celltypes=None,
             fmt="txt",
@@ -105,11 +106,37 @@ class BulkCreate(object):
         self.num_samples = num_samples // 2
         self.data_path = data_path
         self.out_path = out_path
+        self.out_name = out_name
         self.pattern = pattern
         self.unknown_celltypes = unknown_celltypes
         self.format = fmt
         self.datasets = []
         self.dataset_files = []
+
+    def _resolve_h5ad_name(self, dataset: str) -> str:
+        if not self.out_name:
+            return dataset + "_" + str(2 * self.num_samples) + ".h5ad"
+
+        name = self.out_name
+        if "{dataset}" in name:
+            name = name.format(dataset=dataset)
+
+        if not name.endswith(".h5ad"):
+            name = name + ".h5ad"
+
+        # If the user gave a fixed name but we're simulating multiple datasets,
+        # avoid overwriting by prefixing the dataset.
+        if "{dataset}" not in (self.out_name or ""):
+            try:
+                multiple = len(self.datasets) > 1
+            except Exception:
+                multiple = False
+
+            if multiple:
+                base, ext = os.path.splitext(name)
+                name = f"{dataset}_{base}{ext}"
+
+        return name
 
     def _list_dataset_prefixes(self) -> List[str]:
         if not self.data_path.endswith("/"):
@@ -172,7 +199,7 @@ class BulkCreate(object):
         )
         ann_data.uns["unknown"] = self.unknown_celltypes
         ann_data.uns["cell_types"] = celltypes
-        h5ad_name = dataset + "_" + str(2 * self.num_samples) + ".h5ad"
+        h5ad_name = self._resolve_h5ad_name(dataset)
         ann_data.write(os.path.join(self.out_path, h5ad_name), compression='gzip')
 
     def load_dataset(self, dataset):

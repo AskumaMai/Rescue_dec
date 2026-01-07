@@ -1,11 +1,12 @@
 from rescue.create_dataset import BulkCreate
-def simulation(simulate_path, data_path, sample_size, num_samples, pattern, fmt):
+def simulation(simulate_path, data_path, sample_size, num_samples, pattern, fmt, out_name=None):
     unknown_celltypes=[]
     unknown_celltypes = list(unknown_celltypes)
     bulk_simulator = BulkCreate(sample_size=sample_size,
                                    num_samples=num_samples,
                                    data_path=data_path,
                                    out_path=simulate_path,
+                                   out_name=out_name,
                                    pattern=pattern,
                                    unknown_celltypes=unknown_celltypes,
                                    fmt=fmt)
