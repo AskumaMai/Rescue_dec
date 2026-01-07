@@ -19,3 +19,10 @@ env/
 # Win11 WSL
 
 *:Zone.Identifier
+
+# Test outputs
+*.h5ad
+model.pt
+training_log.csv
+model_outputs.txt
+*.png

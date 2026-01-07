@@ -70,6 +70,8 @@ def some_function(
                       device=device,
                       outdir=outdir
                       )
+        print('Training Finished')
+
     else:
         print('\n## Loading Model: {}\n'.format(model_path))
         state_dict = torch.load(model_path, map_location=torch.device(device))
@@ -97,7 +99,7 @@ def some_function(
         column_indices = adata.obs.columns[:k]
         row_indices = adata.obs.index
         output_df = pd.DataFrame(output_pre, index=row_indices, columns=column_indices)
-        output_df.to_csv('pre/model_outputs.txt', sep='\t', index=True, header=True)
-
-    print("over....")
+        output_df.to_csv('model_outputs.txt', sep='\t', index=True, header=True)
+        print(f'Model outputs saved to /model_outputs.txt')
+        print("Prediction Finished")
 

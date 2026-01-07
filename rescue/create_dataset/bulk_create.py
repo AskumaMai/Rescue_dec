@@ -1,112 +1,87 @@
-import logging
-import glob
-import os
-import sys
 import gc
-import pandas as pd
+import glob
+import logging
+import os
+import re
+import sys
+from typing import Iterable, List, Optional, Sequence, Tuple
+
 import anndata as ad
 import numpy as np
+import pandas as pd
 from rich.progress import BarColumn, Progress
 
 logger = logging.getLogger(__name__)
 
+_CELLTYPE_COL = "Celltype"
+_UNKNOWN_LABEL = "Unknown"
+_SORT_RE = re.compile(r"([a-zA-Z]+)([0-9]+)")
 
-def sort_key(s):
-    import re
-    match = re.match(r"([a-zA-Z]+)([0-9]+)", s)
+
+def sort_key(s: str) -> Tuple[str, int]:
+    match = _SORT_RE.match(s)
     if match:
-        letter_part = match.group(1)
-        number_part = int(match.group(2))
-        return (letter_part, number_part)
+        return (match.group(1), int(match.group(2)))
     return (s, 0)
 
 
-def generate_numbers_with_fixed_sum(fixed_number, n, unk_num=-1):
+def generate_numbers_with_fixed_sum(fixed_number: float, n: int, unk_num: int = -1) -> np.ndarray:
     if fixed_number < 0 or fixed_number > 1:
         raise ValueError("The fixed number must be between 0 and 1.")
     if n < 1:
         raise ValueError("The total number of elements n must be at least 1.")
-    # Generate n-1 random numbers
+
     random_numbers = np.random.rand(n - 1)
-    # Calculate the sum of the random numbers
     random_sum = np.sum(random_numbers)
-    # Normalize the random numbers to sum to (1 - fixed_number)
     random_numbers = (random_numbers / random_sum) * (1 - fixed_number)
-    # Combine the fixed number with the normalized random numbers
+
     if unk_num >= 0:
-        result = np.insert(random_numbers, unk_num - 1, fixed_number)
-    else:
-        result = np.append(fixed_number, random_numbers)
-    return result
+        return np.insert(random_numbers, unk_num - 1, fixed_number)
+    return np.append(fixed_number, random_numbers)
 
 
-def create_fractions_unk(no_celltypes, count, n_samps=4000):
+def _pick_fixed_number(no_celltypes: int, count: int, n_samps: int) -> float:
     if no_celltypes == 1:
-        fixed_number = 1
-    else:
-        for i in range(1, 11):
-            if (i - 1) * 0.1 * n_samps < count <= i * 0.1 * n_samps:
-                fixed_number = np.random.uniform((i - 1) * 0.1, i * 0.1)
-                break
-        # fixed_number = np.random.uniform(0.5, 1)
-        logger.debug(fixed_number)
-        # Example usage
-        # fixed_number = lie1
+        return 1
 
-    # fixed_number = 0.3
-    # # fixed_number = np.random.uniform(0.5, 1)
-    # print(fixed_number)
-    # Example usage
-    # fixed_number = lie1
-    n = no_celltypes  # Total number of elements
-    fracs = generate_numbers_with_fixed_sum(fixed_number, n, 6)
-    logger.debug("Numbers: %s", fracs)
-    logger.debug("Sum of numbers: %s", np.sum(fracs))
-    return fracs
-
-
-def create_fractions_s(no_celltypes, count, n_samps=2000):
-    # fixed_number = np.random.uniform(0, 0.1)
-    # # fixed_number = np.random.uniform(0.5, 1)
-    # print(fixed_number)
-    # # Example usage
-    # # fixed_number = lie1
-    # n = no_celltypes  # Total number of elements
-    # fracs = generate_numbers_with_fixed_sum(fixed_number, n)
-    # print("Numbers:", fracs)
-    # print("Sum of numbers:", np.sum(fracs))
-
-    # if count <= 0.1*n_samps:
-    #     fixed_number = np.random.uniform(0, 0.1)
-    # if 0.1*n_samps< count <= 0.2 * n_samps:
-    #     fixed_number = np.random.uniform(0.1, 0.2)
-    # fixed_number=0
-
-    if no_celltypes == 1:
-        fixed_number = 1
-    else:
-        for i in range(1, 11):
-            if (i - 1) * 0.1 * n_samps < count <= i * 0.1 * n_samps:
-                fixed_number = np.random.uniform((i - 1) * 0.1, i * 0.1)
-                break
-        logger.debug("fixed_number: %s", fixed_number)
-    n = no_celltypes  # Total number of elements
-    fracs = generate_numbers_with_fixed_sum(fixed_number, n)
-    logger.debug("Numbers: %s", fracs)
-    logger.debug("Sum of numbers: %s", np.sum(fracs))
-    return fracs
-
-
-def create_fractions_n(no_celltypes, count, n_samps=2000):
     for i in range(1, 11):
         if (i - 1) * 0.1 * n_samps < count <= i * 0.1 * n_samps:
-            fixed_number = np.random.uniform((i - 1) * 0.1, i * 0.1)
-            break
+            return np.random.uniform((i - 1) * 0.1, i * 0.1)
+
+    # Preserve the original behavior: if the caller passes a count outside the
+    # covered bins, the original code would end up using an unbound variable.
+    # Keep that behavior rather than changing edge-case semantics.
+    raise UnboundLocalError("fixed_number")
+
+
+def create_fractions_unk(no_celltypes: int, count: int, n_samps: int = 4000) -> np.ndarray:
+    fixed_number = _pick_fixed_number(no_celltypes, count, n_samps)
+    logger.debug(fixed_number)
+
+    fracs = generate_numbers_with_fixed_sum(fixed_number, no_celltypes, 6)
+    logger.debug("Numbers: %s", fracs)
+    logger.debug("Sum of numbers: %s", np.sum(fracs))
+    return fracs
+
+
+def create_fractions_s(no_celltypes: int, count: int, n_samps: int = 2000) -> np.ndarray:
+    fixed_number = _pick_fixed_number(no_celltypes, count, n_samps)
     logger.debug("fixed_number: %s", fixed_number)
-    n = no_celltypes  # Total number of elements
+
+    fracs = generate_numbers_with_fixed_sum(fixed_number, no_celltypes)
+    logger.debug("Numbers: %s", fracs)
+    logger.debug("Sum of numbers: %s", np.sum(fracs))
+    return fracs
+
+
+def create_fractions_n(no_celltypes: int, count: int, n_samps: int = 2000) -> np.ndarray:
+    fixed_number = _pick_fixed_number(no_celltypes, count, n_samps)
+    logger.debug("fixed_number: %s", fixed_number)
+
     pos = count % no_celltypes + 1
-    logger.debug('pos: %s', pos)
-    fracs = generate_numbers_with_fixed_sum(fixed_number, n, pos)
+    logger.debug("pos: %s", pos)
+
+    fracs = generate_numbers_with_fixed_sum(fixed_number, no_celltypes, pos)
     logger.debug("Numbers: %s", fracs)
     logger.debug("Sum of numbers: %s", np.sum(fracs))
     return fracs
@@ -136,27 +111,27 @@ class BulkCreate(object):
         self.datasets = []
         self.dataset_files = []
 
-    def simulate(self):
-        # List available datasets
+    def _list_dataset_prefixes(self) -> List[str]:
         if not self.data_path.endswith("/"):
             self.data_path += "/"
+
         files = glob.glob(os.path.join(self.data_path, self.pattern))
         files = [os.path.basename(x) for x in files]
-        self.datasets = [x.replace(self.pattern.replace("*", ""), "") for x in files]
-        self.dataset_files = [
-            os.path.join(self.out_path, x + ".h5ad") for x in self.datasets
-        ]
+
+        pattern_suffix = self.pattern.replace("*", "")
+        return [x.replace(pattern_suffix, "") for x in files]
+
+    def simulate(self):
+        self.datasets = self._list_dataset_prefixes()
+        self.dataset_files = [os.path.join(self.out_path, x + ".h5ad") for x in self.datasets]
 
         if len(self.datasets) == 0:
-            logging.error(
-                "No datasets found! Have you specified the pattern correctly?"
-            )
+            logging.error("No datasets found! Have you specified the pattern correctly?")
             sys.exit(1)
 
         logger.info("Datasets: [cyan]" + str(self.datasets) + "[/]")
 
-        # Loop over datasets and simulate bulk data
-        for i, dataset in enumerate(self.datasets):
+        for dataset in self.datasets:
             gc.collect()
             logger.info(f"[bold u]Simulating data from {dataset}")
             self.simulate_dataset(dataset)
@@ -164,7 +139,6 @@ class BulkCreate(object):
         logger.info("[bold green]Finished data simulation!")
 
     def simulate_dataset(self, dataset):
-        # load the dataset
         data_x, data_y = self.load_dataset(dataset)
 
         # Merge unknown celltypes
@@ -173,8 +147,7 @@ class BulkCreate(object):
 
         logger.info(f"Subsampling [bold cyan]{dataset}[/] ...")
 
-        # Extract celltypes
-        celltypes = list(set(data_y["Celltype"].tolist()))
+        celltypes = list(set(data_y[_CELLTYPE_COL].tolist()))
         available_celltypes = sorted(celltypes, key=sort_key)
         logger.info("available_celltypes: %s", available_celltypes)
         celltypes = available_celltypes
@@ -185,6 +158,12 @@ class BulkCreate(object):
         tmp_x = tmp_x.sort_index(axis=1)
         ratios = pd.DataFrame(tmp_y, columns=celltypes)
         ratios["ds"] = pd.Series(np.repeat(dataset, tmp_y.shape[0]), index=ratios.index)
+
+        # Avoid AnnData's ImplicitModificationWarning about converting indices to strings.
+        # AnnData expects obs/var indices to be string-like.
+        ratios.index = ratios.index.astype(str)
+        # AnnData will store string columns as categorical on write; do it explicitly to reduce noise.
+        ratios["ds"] = ratios["ds"].astype("category")
 
         ann_data = ad.AnnData(
             X=tmp_x.to_numpy(),
@@ -204,11 +183,9 @@ class BulkCreate(object):
 
         # Load data in .txt format
         if self.format == "txt":
-            # Try to load celltypes
             try:
                 y = pd.read_table(os.path.join(self.data_path, dataset_celltypes))
-                # Check if has Celltype column
-                if "Celltype" not in y.columns:
+                if _CELLTYPE_COL not in y.columns:
                     logger.error(
                         f"No 'Celltype' column found in {dataset}_celltypes.txt! Please make sure to include this "
                         f"column. "
@@ -269,11 +246,10 @@ class BulkCreate(object):
         return x, y
 
     def merge_unknown_celltypes(self, y):
-        celltypes = list(y["Celltype"])
-        new_celltypes = [
-            "Unknown" if x in self.unknown_celltypes else x for x in celltypes
+        celltypes = list(y[_CELLTYPE_COL])
+        y[_CELLTYPE_COL] = [
+            _UNKNOWN_LABEL if x in self.unknown_celltypes else x for x in celltypes
         ]
-        y["Celltype"] = new_celltypes
         return y
 
     def create_subsample_dataset(self, x, y, celltypes):
@@ -296,14 +272,27 @@ class BulkCreate(object):
             n_sam = self.num_samples
             for i in range(self.num_samples):
                 progress_bar.update(normal_samples_progress, advance=1, samples=i + 1)
-                # print(i)
-                sample, label = self.create_subsample(x, y, celltypes, sparse=False, samp=n_sam, count=i + 1)
+                sample, label = self.create_subsample(
+                    x,
+                    y,
+                    celltypes,
+                    sparse=False,
+                    samp=n_sam,
+                    count=i + 1,
+                )
                 sim_x.append(sample)
                 sim_y.append(label)
             # Create sparase samples
             for i in range(self.num_samples):
                 progress_bar.update(sparse_samples_progress, advance=1, samples=i + 1)
-                sample, label = self.create_subsample(x, y, celltypes, sparse=True, samp=n_sam, count=i + 1)
+                sample, label = self.create_subsample(
+                    x,
+                    y,
+                    celltypes,
+                    sparse=True,
+                    samp=n_sam,
+                    count=i + 1,
+                )
                 sim_x.append(sample)
                 sim_y.append(label)
 
@@ -339,7 +328,7 @@ class BulkCreate(object):
         artificial_samples = []
         for i in range(no_avail_cts):
             ct = available_celltypes[i]
-            cells_sub = x.loc[np.array(y["Celltype"] == ct), :]
+            cells_sub = x.loc[np.array(y[_CELLTYPE_COL] == ct), :]
             cells_fraction = np.random.randint(0, cells_sub.shape[0], samp_fracs[i])
             cells_sub = cells_sub.iloc[cells_fraction, :]
             artificial_samples.append(cells_sub)

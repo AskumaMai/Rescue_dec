@@ -54,7 +54,7 @@ Here we restrict number of epochs to 500 (optimal from our paper)
 By Default, 1501 epochs + early stop algorithm
 
 ```bash
-rescue train pbmc3k_9_1000_4000.h5ad pbmc3k_9_1000_1000.h5ad --e 500
+rescue train pbmc3k_9_1000_4000.h5ad pbmc3k_9_1000_1000.h5ad -e 500
 ```
 
 This should produce two files in working directory:
