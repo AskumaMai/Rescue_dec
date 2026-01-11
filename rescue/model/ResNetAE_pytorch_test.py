@@ -49,7 +49,7 @@ class ResNet_pred(torch.nn.Module):
                 n_epoch=1501,
                 verbose=True,
                 outdir=None,
-                early_stop = 500
+                early_stop=500,
                 ):
         self.to(device)
         optimizer = torch.optim.Adam(self.parameters(), lr=lr, weight_decay=weight_decay)
@@ -89,6 +89,10 @@ class ResNet_pred(torch.nn.Module):
         with iter_progress as p_iter, epoch_progress as p_epoch:
             iter_task = p_iter.add_task("Iterations", total=0)
             epoch_task = p_epoch.add_task("Epochs", total=n_epoch)
+            patience_task = None
+            if early_stop is not None and early_stop > 0:
+                patience_task = p_epoch.add_task("Early-stop patience", total=early_stop)
+                p_epoch.update(patience_task, completed=0)
 
             for epoch in range(n_epoch):
                 self.train()
@@ -218,6 +222,9 @@ class ResNet_pred(torch.nn.Module):
                             except Exception as e:
                                 continue
                         print(f"\nsave at epoch:{epoch}")
+
+                if patience_task is not None:
+                    p_epoch.update(patience_task, completed=min(count, early_stop))
                 if count == early_stop or min_loss == 0:
                     print(
                         f"\nearly stop........\nepoch_max:{epoch_max},min_loss: {min_loss:.4f},ccc_value_min: {ccc_value_max}")

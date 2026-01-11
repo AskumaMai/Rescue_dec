@@ -48,6 +48,7 @@ Simulation
     '-n',
     required=True,
     type=int,
+    default=4000,
     help='Number of samples to simulate'
 )
 @click.option(
@@ -105,13 +106,13 @@ Training
 @click.option(
     '--data_path',
     type=click.Path(exists=True),
-    default='./train',
+    default='./train.h5ad',
     metavar='train_data_path',
 )
 @click.option(
     '--test_path',
     type=click.Path(exists=True),
-    default='./test',
+    default='./test.h5ad',
     metavar='test_data_path',
 )
 @click.option(
@@ -154,7 +155,7 @@ Training
 @click.option(
     '--early_stop',
     '-es',
-    default=500,
+    default=50,
     help='Early stopping epochs without improvement'
 )
 def train(data_path, test_path, out_dir, lr, n_epoch, batch_size, gpu, seed, early_stop):
@@ -186,21 +187,24 @@ Prediction
     '-d',
     required=True,
     type=click.Path(exists=True),
-    help='Path to training data (.h5ad)'
+    help='Path to training data (.h5ad)',
+    default='train.h5ad'
 )
 @click.option(
     '--test_path',
     '-t',
     required=True,
     type=click.Path(exists=True),
-    help='Path to test data (.h5ad)'
+    help='Path to test data (.h5ad)',
+    default='pred.h5ad'
 )
 @click.option(
     '--model_path',
     '-m',
     required=True,
     type=click.Path(exists=True),
-    help='Path to trained model file'
+    help='Path to trained model file',
+    default='model.pt'
 )
 @click.option(
     '--gpu',
@@ -241,14 +245,16 @@ Evaluation
     '-a',
     required=True,
     type=click.Path(exists=True),
-    help='Path to ground-truth AnnData (.h5ad)'
+    help='Path to ground-truth AnnData (.h5ad)',
+    default='pred.h5ad'
 )
 @click.option(
     '--results_path',
     '-r',
     required=True,
     type=click.Path(exists=True),
-    help='Path to prediction results file'
+    help='Path to prediction results file',
+    default='model_outputs.txt'
 )
 @click.option(
     '--out_path',

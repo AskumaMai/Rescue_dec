@@ -23,6 +23,8 @@ env/
 # Test outputs
 *.h5ad
 model.pt
-training_log.csv
 model_outputs.txt
 *.png
+training_log.csv
+*.txt
+*.keras
